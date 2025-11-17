@@ -20,6 +20,12 @@ All agents have access to web search capabilities through the SearXNG MCP server
 - Competitive intelligence
 - External data gathering
 
+### 🧠 Persistent Memory System
+- ChromaDB vector database with persistent storage
+- Ollama embeddings for semantic search
+- REST API for memory operations
+- Automatic result storage and retrieval
+
 ### 📊 Advanced Progress Tracking
 - Real-time agent status monitoring
 - Parallel execution with concurrency control
@@ -54,7 +60,16 @@ All agents have access to web search capabilities through the SearXNG MCP server
    ollama pull llama3.2
    ```
 
-4. **Configure MCP (Web Search):**
+4. **Setup Memory Server (Optional):**
+   ```bash
+   # Pull embedding model for memory system
+   ollama pull nomic-embed-text
+
+   # Start memory server (runs on port 8000)
+   python memory-server/app.py &
+   ```
+
+5. **Configure MCP (Web Search):**
    The system uses MCP for web search capabilities. Update `SEARXNG_URL` in your `.env` file to point to your SearXNG instance.
 
 ## Usage
@@ -77,6 +92,21 @@ python main.py open
 
 # Show help and usage information
 python main.py help
+```
+
+### Memory Server Commands
+```bash
+# Start memory server (runs on port 8000)
+python memory-server/app.py
+
+# Clear memory data (with confirmation)
+python memory-server/clear_memory.py --clear-store
+
+# Clear all memory data without confirmation
+python memory-server/clear_memory.py --clear-all --yes
+
+# Show memory statistics
+python memory-server/clear_memory.py --stats
 ```
 
 ### Output & Reports
@@ -121,6 +151,16 @@ ollama-bench/
 │   ├── engine.py            # Core execution engine with MCP
 │   ├── messages.py          # Message passing infrastructure
 │   └── utils.py             # Utility functions
+├── memory-server/           # Persistent memory system
+│   ├── app.py               # FastAPI server entry point
+│   ├── clear_memory.py      # Memory clearing utilities
+│   ├── chroma/              # ChromaDB client and configuration
+│   ├── config/              # Memory server configuration
+│   ├── embeddings/          # Ollama embedding service
+│   ├── server/              # REST API endpoints
+│   ├── storage/             # Vector store management
+│   └── tests/               # Memory server tests
+├── storage/                 # Persistent data storage
 ├── reports/                 # Generated markdown reports
 └── exports/                 # Generated JSON data exports
 ```
@@ -131,6 +171,10 @@ ollama-bench/
 - **`agents/engine.py`**: Ollama integration, MCP web search, concurrency control
 - **`agents/messages.py`**: Inter-agent communication infrastructure
 - **`agents/utils.py`**: Configuration validation and utilities
+- **`memory-server/app.py`**: FastAPI server for persistent memory operations
+- **`memory-server/storage/chroma_manager.py`**: ChromaDB vector store management
+- **`memory-server/embeddings/ollama_embedder.py`**: Ollama embedding service
+- **`memory-server/server/api.py`**: REST API endpoints for memory operations
 
 ### MCP Integration
 - **MCPClient**: Handles Model Context Protocol communication
@@ -143,6 +187,51 @@ ollama-bench/
 - **Progress Tracking**: Real-time execution monitoring
 - **References**: Complete web source citations and URLs
 
+### Memory Server API
+The memory server provides REST endpoints for persistent memory operations:
+
+#### Health Check
+```bash
+GET /memory/health
+```
+
+#### Store Memory
+```bash
+POST /memory/store
+Content-Type: application/json
+
+{
+  "text": "Memory content to store",
+  "agent": "researcher",
+  "task": "Task description",
+  "tags": ["optional", "tags"]
+}
+```
+
+#### Search Memory
+```bash
+POST /memory/search
+Content-Type: application/json
+
+{
+  "query": "search query text",
+  "n_results": 5,
+  "agent": "researcher"
+}
+```
+
+#### Clear Memory
+```bash
+POST /memory/clear
+Content-Type: application/json
+
+{
+  "confirm": true,
+  "clear_data": true,
+  "clear_file": false
+}
+```
+
 ## Configuration
 
 ### Environment Variables (.env)
@@ -153,6 +242,12 @@ OLLAMA_MODEL=llama3.2
 
 # System Configuration
 MAX_CONCURRENT=3
+
+# Memory Server Configuration
+MEMORY_SERVER_URL=http://localhost:8000
+CHROMA_PERSIST_DIR=./storage/vector_memory
+EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_EMBEDDING_URL=http://localhost:11434/api/embeddings
 
 # SearXNG MCP Configuration
 SEARXNG_URL=http://localhost:8888/search
