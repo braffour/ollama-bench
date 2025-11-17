@@ -1,0 +1,2 @@
+"""Ollama embedding service."""
+
